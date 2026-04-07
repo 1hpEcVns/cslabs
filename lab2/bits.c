@@ -221,7 +221,7 @@ unsigned float_neg(unsigned uf) {
  *   Rating: 4
  */
 unsigned float_i2f(int x) {
-  unsigned sign, exp, frac;
+  unsigned sign, exp, frac, round;
   int shift;
 
   if (x == 0)
@@ -235,8 +235,13 @@ unsigned float_i2f(int x) {
   while ((x >> (31 - shift)) == 0)
     shift++;
 
+  x = x << shift;
   exp = (127 + (31 - shift)) << 23;
   frac = (x >> 8) & 0x7FFFFF;
+  round = (x >> 7) & 1;
+
+  if (round && (frac & 1))
+    frac = frac + 1;
 
   return sign | exp | frac;
 }
