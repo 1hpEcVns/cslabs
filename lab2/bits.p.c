@@ -30,22 +30,20 @@ int isPower2(int x) {
 }
 #line 207
 unsigned float_neg(unsigned uf) {
-  unsigned exp=  uf &( 0x7F << 23);
+  unsigned exp=(  uf >> 23) & 0xFF;
   unsigned frac=  uf &(( 1 << 23) - 1);
-  if (exp ==( 0x7F << 23) && frac != 0) 
+  if (exp == 0xFF && frac != 0) 
     return uf;
   return uf ^( 1 << 31);
 }
 #line 223
 unsigned float_i2f(int x) {
   unsigned sign=  0;
-  unsigned frac;unsigned exp;
-  int shift;int bias;int round;int sticky;
+  unsigned exp;unsigned frac;
+  int shift;
 
   if (x == 0) 
     return 0;
-  if (x ==( 1 << 31)) 
-    return (1 << 31) |(( 127 - 31 + 1 + 127) << 23);
 
   if (x < 0) {
     sign = 1 << 31;
@@ -57,20 +55,18 @@ unsigned float_i2f(int x) {
     shift++;
 
   x = x << shift;
-  frac =( x >> 8) &(( 1 << 23) - 1);
-  round =( x >> 7) & 1;
-  sticky =( x & 0x7F) != 0;
+  exp =( 127 +( 31 - shift)) << 23;
+  frac =( x >> 8) & 0x7FFFFF;
 
-  if (round &&( sticky ||( frac & 1))) 
-    frac = frac + 1;
-
-  if (frac &( 1 << 23)) {
-    frac = 0;
-    bias = 127 +( 31 - shift) + 1;
-  } else {
-    bias = 127 +( 31 - shift);
+  if ((x >> 7) & 1) {
+    if ((x & 0x7F) ||( frac & 1)) 
+      frac = frac + 1;
   }
-  exp = bias << 23;
+
+  if (frac >> 23) {
+    exp = exp +( 1 << 23);
+    frac = 0;
+  }
 
   return sign | exp | frac;
 }
