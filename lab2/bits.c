@@ -205,9 +205,9 @@ int isPower2(int x) {
  *   Rating: 2
  */
 unsigned float_neg(unsigned uf) {
-  unsigned exp = uf & (0x7F << 23);
+  unsigned exp = (uf >> 23) & 0xFF;
   unsigned frac = uf & ((1 << 23) - 1);
-  if (exp == (0x7F << 23) && frac != 0)
+  if (exp == 0xFF && frac != 0)
     return uf;
   return uf ^ (1 << 31);
 }
@@ -227,8 +227,6 @@ unsigned float_i2f(int x) {
 
   if (x == 0)
     return 0;
-  if (x == (1 << 31))
-    return (1 << 31) | ((127 - 31 + 1 + 127) << 23);
 
   if (x < 0) {
     sign = 1 << 31;
