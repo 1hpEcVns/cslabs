@@ -178,6 +178,8 @@ return sign | exp | frac;
 
 ## 复现方法
 
+### 方式一：使用 Nix (推荐)
+
 ```bash
 cd lab2
 
@@ -189,4 +191,42 @@ nix develop -c make           # 构建 btest
 nix develop -c ./btest        # 运行测试
 nix develop -c perl driver.pl  # 运行完整评分
 nix develop -c make submit     # 生成 lab2-handin.zip
+```
+
+### 方式二：直接使用 gcc (需 32-bit gcc)
+
+```bash
+cd lab2
+
+# 编译
+gcc -m32 -o btest bits.c btest.c decl.c tests.c -lm
+
+# 测试
+./btest
+
+# 检查语法和操作符数量
+./dlc -z bits.c
+./dlc -e bits.c
+
+# 完整评分 (需安装 perl)
+perl driver.pl
+```
+
+### 方式三：修复 dlc 解释器 (非 Nix 系统)
+
+```bash
+cd lab2
+
+# 查找正确的解释器
+dlc_interp=$(ldd ./dlc | grep ld-linux | awk '{print $3}')
+patchelf --set-interpreter "$dlc_interp" ./dlc
+
+# 然后按方式二运行
+```
+
+### Git 配置 (避免 Makefile 报错)
+
+```bash
+git config --global user.email "you@example.com"
+git config --global user.name "Your Name"
 ```
