@@ -205,11 +205,11 @@ int isPower2(int x) {
  *   Rating: 2
  */
 unsigned float_neg(unsigned uf) {
-  unsigned exp = uf & 0x7F800000;
-  unsigned frac = uf & 0x007FFFFF;
-  if (exp == 0x7F800000 && frac != 0)
+  unsigned exp = uf & (0x7F << 23);
+  unsigned frac = uf & ((1 << 23) - 1);
+  if (exp == (0x7F << 23) && frac != 0)
     return uf;
-  return uf ^ 0x80000000;
+  return uf ^ (1 << 31);
 }
 /* 
  * float_i2f - Return bit-level equivalent of expression (float) x
@@ -227,11 +227,11 @@ unsigned float_i2f(int x) {
 
   if (x == 0)
     return 0;
-  if (x == 0x80000000)
-    return 0xCF000000;
+  if (x == (1 << 31))
+    return (1 << 31) | ((127 - 31 + 1 + 127) << 23);
 
   if (x < 0) {
-    sign = 0x80000000;
+    sign = 1 << 31;
     x = ~x + 1;
   }
 
@@ -240,14 +240,14 @@ unsigned float_i2f(int x) {
     shift++;
 
   x = x << shift;
-  frac = (x >> 8) & 0x7FFFFF;
+  frac = (x >> 8) & ((1 << 23) - 1);
   round = (x >> 7) & 1;
   sticky = (x & 0x7F) != 0;
 
   if (round && (sticky || (frac & 1)))
     frac = frac + 1;
 
-  if (frac & 0x800000) {
+  if (frac & (1 << 23)) {
     frac = 0;
     bias = 127 + (31 - shift) + 1;
   } else {

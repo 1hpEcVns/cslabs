@@ -39,7 +39,38 @@ unsigned float_neg(unsigned uf) {
 #line 223
 unsigned float_i2f(int x) {
   unsigned sign=  0;
-  unsigned ux;unsigned frac;unsigned exp;
-  int shift;int bias;int round;int sticky;return 4L;
-#line 261
+  unsigned frac;unsigned exp;
+  int shift;int bias;int round;int sticky;
+
+  if (x == 0) 
+    return 0;
+  if (x == 0x80000000) 
+    return 0xCF000000;
+
+  if (x < 0) {
+    sign = 0x80000000;
+    x = ~x + 1;
+  }
+
+  shift = 0;
+  while ((x >>( 31 - shift)) == 0) 
+    shift++;
+
+  x = x << shift;
+  frac =( x >> 8) & 0x7FFFFF;
+  round =( x >> 7) & 1;
+  sticky =( x & 0x7F) != 0;
+
+  if (round &&( sticky ||( frac & 1))) 
+    frac = frac + 1;
+
+  if (frac & 0x800000) {
+    frac = 0;
+    bias = 127 +( 31 - shift) + 1;
+  } else {
+    bias = 127 +( 31 - shift);
+  }
+  exp = bias << 23;
+
+  return sign | exp | frac;
 }
