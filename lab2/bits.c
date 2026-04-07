@@ -239,7 +239,7 @@ unsigned float_i2f(int x) {
 
   x = x << shift;
   exp = (127 + (31 - shift)) << 23;
-  frac = (x >> 8) & 0x7FFFFF;
+  frac = (x >> 8) & ((1 << 23) - 1);
 
   if ((x >> 7) & 1) {
     if ((x & 0x7F) || (frac & 1))
