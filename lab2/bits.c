@@ -139,7 +139,7 @@ NOTES:
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  int mask = ~!x + 1;
+  int mask = ~(!x) + 1;
   return (~mask & y) | (mask & z);
 }
 /* 
@@ -244,11 +244,16 @@ unsigned float_i2f(int x) {
   round = (x >> 7) & 1;
   sticky = (x & 0x7F) != 0;
 
+  bias = 127 + (31 - shift);
+  exp = bias << 23;
+
   if (round && (sticky || (frac & 1)))
     frac = frac + 1;
 
-  bias = 127 + (31 - shift);
-  exp = bias << 23;
+  if (frac & 0x800000) {
+    frac = 0;
+    exp = exp + (1 << 23);
+  }
 
   return sign | exp | (frac & 0x7FFFFF);
 }
