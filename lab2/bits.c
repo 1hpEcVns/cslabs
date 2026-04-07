@@ -139,7 +139,8 @@ NOTES:
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+  int mask = ~!x + 1;
+  return (~mask & y) | (mask & z);
 }
 /* 
  * isNonNegative - return 1 if x >= 0, return 0 otherwise 
@@ -149,7 +150,7 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isNonNegative(int x) {
-  return 2;
+  return !(x >> 31);
 }
 /* 
  * isGreater - if x > y  then return 1, else return 0 
@@ -159,7 +160,13 @@ int isNonNegative(int x) {
  *   Rating: 3
  */
 int isGreater(int x, int y) {
-  return 2;
+  int sign_x = x >> 31;
+  int sign_y = y >> 31;
+  int same_sign = !(sign_x ^ sign_y);
+  int sub = x + ~y + 1;
+  int sub_nonneg = !(sub >> 31);
+  int sub_nonzero = !!sub;
+  return (same_sign & sub_nonneg & sub_nonzero) | (!sign_x & sign_y);
 }
 /* 
  * absVal - absolute value of x
@@ -170,7 +177,8 @@ int isGreater(int x, int y) {
  *   Rating: 4
  */
 int absVal(int x) {
-  return 2;
+  int mask = x >> 31;
+  return (x + mask) ^ mask;
 }
 /*
  * isPower2 - returns 1 if x is a power of 2, and 0 otherwise
@@ -181,7 +189,9 @@ int absVal(int x) {
  *   Rating: 4
  */
 int isPower2(int x) {
-  return 2;
+  int sign = x >> 31;
+  int is_zero = !x;
+  return !sign & !(x & (x + ~0)) & !is_zero;
 }
 /* 
  * float_neg - Return bit-level equivalent of expression -f for
@@ -195,7 +205,11 @@ int isPower2(int x) {
  *   Rating: 2
  */
 unsigned float_neg(unsigned uf) {
- return 2;
+  unsigned exp = uf & 0x7F800000;
+  unsigned frac = uf & 0x007FFFFF;
+  if (exp == 0x7F800000 && frac != 0)
+    return uf;
+  return uf ^ 0x80000000;
 }
 /* 
  * float_i2f - Return bit-level equivalent of expression (float) x
@@ -207,5 +221,34 @@ unsigned float_neg(unsigned uf) {
  *   Rating: 4
  */
 unsigned float_i2f(int x) {
-  return 2;
+  unsigned sign = 0;
+  unsigned frac, exp;
+  int shift, bias, round, sticky;
+
+  if (x == 0)
+    return 0;
+  if (x == 0x80000000)
+    return 0xCF000000;
+
+  if (x < 0) {
+    sign = 0x80000000;
+    x = -x;
+  }
+
+  shift = 0;
+  while ((x >> (31 - shift)) == 0)
+    shift++;
+
+  x = x << shift;
+  frac = x >> 8;
+  round = (x >> 7) & 1;
+  sticky = (x & 0x7F) != 0;
+
+  if (round && (sticky || (frac & 1)))
+    frac = frac + 1;
+
+  bias = 127 + (31 - shift);
+  exp = bias << 23;
+
+  return sign | exp | (frac & 0x7FFFFF);
 }
