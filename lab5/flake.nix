@@ -19,6 +19,8 @@
           pkgs.git
           pkgs.zip
         ];
+
+        hardeningDisable = [ "fortify" ];
       };
     };
 }
