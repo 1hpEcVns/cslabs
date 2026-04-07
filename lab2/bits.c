@@ -222,7 +222,7 @@ unsigned float_neg(unsigned uf) {
  */
 unsigned float_i2f(int x) {
   unsigned sign = 0;
-  unsigned ux, frac, exp;
+  unsigned frac, exp;
   int shift, bias, round, sticky;
 
   if (x == 0)
@@ -232,19 +232,17 @@ unsigned float_i2f(int x) {
 
   if (x < 0) {
     sign = 0x80000000;
-    x = -x;
+    x = ~x + 1;
   }
 
-  ux = (unsigned)x;
-
   shift = 0;
-  while ((ux >> (31 - shift)) == 0)
+  while ((x >> (31 - shift)) == 0)
     shift++;
 
-  ux = ux << shift;
-  frac = (ux >> 8) & 0x7FFFFF;
-  round = (ux >> 7) & 1;
-  sticky = (ux & 0x7F) != 0;
+  x = x << shift;
+  frac = (x >> 8) & 0x7FFFFF;
+  round = (x >> 7) & 1;
+  sticky = (x & 0x7F) != 0;
 
   if (round && (sticky || (frac & 1)))
     frac = frac + 1;

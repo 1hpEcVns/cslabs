@@ -17,12 +17,12 @@ use lib ".";
 use Driverlib;
 
 # Set to 1 to use btest, 0 to use the BDD checker.
-my $USE_BTEST = 0; 
+my $USE_BTEST = 1; 
 
 # Generic settings 
 $| = 1;      # Flush stdout each time
 umask(0077); # Files created by the user in tmp readable only by that user
-$ENV{PATH} = "/usr/local/bin:/usr/bin:/bin";
+$ENV{PATH} = "/run/current-system/sw/bin:/usr/local/bin:/usr/bin:/bin";
 
 #
 # usage - print help message and terminate
