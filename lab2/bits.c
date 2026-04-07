@@ -221,16 +221,17 @@ unsigned float_neg(unsigned uf) {
  *   Rating: 4
  */
 unsigned float_i2f(int x) {
-  unsigned sign = 0;
-  unsigned frac, exp;
+  unsigned exp;
   int shift, bias, round, sticky;
 
   if (x == 0)
     return 0;
 
   if (x < 0) {
-    sign = 1 << 31;
     x = ~x + 1;
+    exp = 1 << 31;
+  } else {
+    exp = 0;
   }
 
   shift = 0;
@@ -238,20 +239,17 @@ unsigned float_i2f(int x) {
     shift++;
 
   x = x << shift;
-  frac = (x >> 8) & ((1 << 23) - 1);
+  bias = (x >> 23) & 0xFF;
   round = (x >> 7) & 1;
   sticky = (x & 0x7F) != 0;
 
-  if (round && (sticky || (frac & 1)))
-    frac = frac + 1;
+  if (round && (sticky || (bias & 1)))
+    bias = bias + 1;
 
-  if (frac & (1 << 23)) {
-    frac = 0;
-    bias = 127 + (31 - shift) + 1;
-  } else {
-    bias = 127 + (31 - shift);
+  if (bias == 0xFF) {
+    bias = 0;
+    shift = shift + 1;
   }
-  exp = bias << 23;
 
-  return sign | exp | frac;
+  return exp | ((127 + (31 - shift)) << 23) | ((x >> 8) & 0x7FFFFF);
 }
