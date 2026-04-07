@@ -102,3 +102,91 @@ git clone [repository url]
 ## 说明
 
 本实验引用自 https://www.csapp.cs.cmu.edu/
+
+## 解法
+
+### a. conditional(x, y, z)
+利用 mask: x 为 0 时 mask 全 1, x 非 0 时 mask 全 0。
+```c
+int mask = ~(!x) + 1;
+return (~mask & y) | (mask & z);
+```
+
+### b. isNonNegative(x)
+检查符号位是否为 0。
+```c
+return !(x >> 31);
+```
+
+### c. isGreater(x, y)
+分类讨论：同号时比较 x-y，异号时 x 非负则更大。
+```c
+int sign_x = x >> 31;
+int sign_y = y >> 31;
+int same_sign = !(sign_x ^ sign_y);
+int sub = x + ~y + 1;
+int sub_nonneg = !(sub >> 31);
+int sub_nonzero = !!sub;
+return (same_sign & sub_nonneg & sub_nonzero) | (!sign_x & sign_y);
+```
+
+### d. absVal(x)
+利用补码特性：x + mask 后 xor mask 得到绝对值。
+```c
+int mask = x >> 31;
+return (x + mask) ^ mask;
+```
+
+### e. isPower2(x)
+正数且 x & (x-1) == 0 则为 2 的幂。
+```c
+int sign = x >> 31;
+int is_zero = !x;
+return !sign & !(x & (x + ~0)) & !is_zero;
+```
+
+### f. float_neg(uf)
+翻转符号位，但 NaN 返回原值。
+```c
+unsigned exp = (uf >> 23) & 0xFF;
+unsigned frac = uf & ((1 << 23) - 1);
+if (exp == 0xFF && frac != 0)
+  return uf;
+return uf ^ (1 << 31);
+```
+
+### g. float_i2f(x)
+整数转浮点数：归一化后舍入处理。
+```c
+if (x == 0) return 0;
+sign = (x < 0) ? (1 << 31) : 0;
+if (x < 0) x = ~x + 1;
+shift = 0;
+while ((x >> (31 - shift)) == 0) shift++;
+x = x << shift;
+exp = (127 + (31 - shift)) << 23;
+frac = (x >> 8) & 0x7FFFFF;
+if ((x >> 7) & 1) {
+  if ((x & 0x7F) || (frac & 1)) frac = frac + 1;
+}
+if (frac >> 23) {
+  exp = exp + (1 << 23);
+  frac = 0;
+}
+return sign | exp | frac;
+```
+
+## 复现方法
+
+```bash
+cd lab2
+nix develop -c make           # 构建 btest
+nix develop -c ./btest        # 运行测试
+nix develop -c perl driver.pl  # 运行完整评分
+nix develop -c make submit     # 生成 lab2-handin.zip
+```
+
+注意：首次运行需先运行以下命令修复 dlc 解释器：
+```bash
+nix develop -c bash -c "patchelf --set-interpreter /nix/store/jms7zxzm7w1whczwny5m3gkgdjghmi2r-glibc-2.42-51/lib/ld-linux-x86-64.so.2 ./dlc"
+```
