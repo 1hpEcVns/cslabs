@@ -163,9 +163,8 @@ sign = (x < 0) ? (1 << 31) : 0;
 if (x < 0) x = ~x + 1;
 shift = 0;
 while ((x >> (31 - shift)) == 0) shift++;
-x = x << shift;
 exp = (127 + (31 - shift)) << 23;
-frac = (x >> 8) & 0x7FFFFF;
+frac = (x >> 8) & ((1 << 23) - 1);
 if ((x >> 7) & 1) {
   if ((x & 0x7F) || (frac & 1)) frac = frac + 1;
 }
