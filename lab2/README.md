@@ -180,13 +180,13 @@ return sign | exp | frac;
 
 ```bash
 cd lab2
+
+# 修复 dlc 解释器 (首次)
+dlc_interp=$(ls /nix/store/*-glibc-*/lib/ld-linux-x86-64.so.2 | head -1)
+patchelf --set-interpreter "$dlc_interp" ./dlc
+
 nix develop -c make           # 构建 btest
 nix develop -c ./btest        # 运行测试
 nix develop -c perl driver.pl  # 运行完整评分
 nix develop -c make submit     # 生成 lab2-handin.zip
-```
-
-注意：首次运行需先运行以下命令修复 dlc 解释器：
-```bash
-nix develop -c bash -c "patchelf --set-interpreter /nix/store/jms7zxzm7w1whczwny5m3gkgdjghmi2r-glibc-2.42-51/lib/ld-linux-x86-64.so.2 ./dlc"
 ```
